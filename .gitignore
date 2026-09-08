@@ -33,3 +33,6 @@ Thumbs.db
 GirlfriendAi.Api/publish/
 GirlfriendAi.Api/bonbot-api.zip
 GirlfriendAi.Web/.env.production
+*publish-profile*.xml
+# Azure publish profiles
+*publish-profile*.xml
