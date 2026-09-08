@@ -18,7 +18,16 @@ function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem('bonbotTheme') || 'dark'
+  )
+
   const chatRef = useRef(null)
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    localStorage.setItem('bonbotTheme', theme)
+  }, [theme])
 
   useEffect(() => {
     if (isLoggedIn && token) {
@@ -31,6 +40,12 @@ function App() {
       chatRef.current.scrollTop = chatRef.current.scrollHeight
     }
   }, [messages, isLoading, error])
+
+  function toggleTheme() {
+    setTheme((currentTheme) =>
+      currentTheme === 'dark' ? 'light' : 'dark'
+    )
+  }
 
   function clearSession() {
     sessionStorage.removeItem('bonbotToken')
@@ -199,8 +214,19 @@ function App() {
     return (
       <main>
         <div className="chat-header">
-          <h1>Bönbot</h1>
-          <span>Din personliga AI</span>
+          <div>
+            <h1>Bönbot ❤️</h1>
+            <span>Bönans personliga robot</span>
+          </div>
+
+          <button
+            className="theme-toggle"
+            onClick={toggleTheme}
+            aria-label="Byt tema"
+            title="Byt tema"
+          >
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
         </div>
 
         <div className="login-panel">
@@ -227,8 +253,19 @@ function App() {
   return (
     <main>
       <div className="chat-header">
-        <h1>Bönbot ❤️</h1>
-        <span>Bönans personliga robot</span>
+        <div>
+          <h1>Bönbot ❤️</h1>
+          <span>Bönans personliga robot</span>
+        </div>
+
+        <button
+          className="theme-toggle"
+          onClick={toggleTheme}
+          aria-label="Byt tema"
+          title="Byt tema"
+        >
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
       </div>
 
       <div className="chat" ref={chatRef}>
@@ -247,7 +284,7 @@ function App() {
             }`}
           >
             <strong>
-              {item.role === 'user' ? 'Bönan' : 'Bönbot'}
+              {item.role === 'user' ? 'Bön' : 'Bönbot'}
             </strong>
 
             {item.content}
@@ -271,7 +308,7 @@ function App() {
           value={message}
           onChange={(event) => setMessage(event.target.value)}
           onKeyDown={handleChatKeyDown}
-          placeholder="Skriv ett meddelande McBön..."
+          placeholder="Skriv ett meddelande..."
           disabled={isLoading}
         />
 
