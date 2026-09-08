@@ -228,7 +228,7 @@ function App() {
     <main>
       <div className="chat-header">
         <h1>Bönbot</h1>
-        <span>Din personliga AI</span>
+        <span>Bönans personliga AI</span>
       </div>
 
       <div className="chat" ref={chatRef}>
