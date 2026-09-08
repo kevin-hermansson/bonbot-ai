@@ -227,7 +227,7 @@ function App() {
   return (
     <main>
       <div className="chat-header">
-        <h1>Bönbot</h1>
+        <h1>Bönbot ❤️</h1>
         <span>Bönans personliga AI</span>
       </div>
 
