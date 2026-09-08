@@ -1,0 +1,6 @@
+@GirlfriendAi.Api_HostAddress = http://localhost:5015
+
+GET {{GirlfriendAi.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
