@@ -7,6 +7,9 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 var appPin = Environment.GetEnvironmentVariable("APP_PIN");
+var frontendUrl =
+    Environment.GetEnvironmentVariable("FRONTEND_URL")
+    ?? "http://localhost:5173";
 
 if (string.IsNullOrWhiteSpace(appPin))
 {
@@ -23,7 +26,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins("http://localhost:5173")
+            .WithOrigins(frontendUrl)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
