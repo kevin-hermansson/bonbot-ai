@@ -22,7 +22,13 @@ Bönbot is a lightweight full-stack AI assistant with persistent chat history, P
 
 ## 🖼️ Preview
 
-> Screenshot coming soon
+### Login
+
+![Bönbot login](docs/bonbot-login.png)
+
+### Chat
+
+![Bönbot chat](docs/bonbot-chat.png)
 
 ---
 
