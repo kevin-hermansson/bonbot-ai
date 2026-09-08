@@ -1,0 +1,37 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "GirlfriendAi.Api/**"
+      - ".github/workflows/deploy-backend.yml"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        working-directory: GirlfriendAi.Api
+        run: dotnet restore
+
+      - name: Publish
+        working-directory: GirlfriendAi.Api
+        run: dotnet publish -c Release -o ./publish
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: bonbot-kevin
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: GirlfriendAi.Api/publish
