@@ -228,7 +228,7 @@ function App() {
     <main>
       <div className="chat-header">
         <h1>Bönbot ❤️</h1>
-        <span>Bönans personliga AI</span>
+        <span>Bönans personliga robot</span>
       </div>
 
       <div className="chat" ref={chatRef}>
@@ -271,7 +271,7 @@ function App() {
           value={message}
           onChange={(event) => setMessage(event.target.value)}
           onKeyDown={handleChatKeyDown}
-          placeholder="Skriv ett meddelande..."
+          placeholder="Skriv ett meddelande McBön..."
           disabled={isLoading}
         />
 
