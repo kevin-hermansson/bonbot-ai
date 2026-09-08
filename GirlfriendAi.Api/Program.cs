@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 var appPin = Environment.GetEnvironmentVariable("APP_PIN");
+
 var frontendUrl =
     Environment.GetEnvironmentVariable("FRONTEND_URL")
     ?? "http://localhost:5173";
@@ -33,6 +34,12 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
 
 app.UseCors("AllowFrontend");
 
