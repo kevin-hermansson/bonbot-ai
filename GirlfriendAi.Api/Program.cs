@@ -95,7 +95,7 @@ app.MapPost("/logout", (HttpRequest request) =>
     return Results.NoContent();
 });
 
-app.MapGet("/", () => "Girlfriend AI API is running");
+app.MapGet("/", () => "Bönbot API is running");
 
 app.MapPost("/chat", async (
     ChatRequest request,
