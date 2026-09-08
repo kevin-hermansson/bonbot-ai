@@ -28,3 +28,8 @@
 # OS files
 .DS_Store
 Thumbs.db
+
+# Deployment artifacts
+GirlfriendAi.Api/publish/
+GirlfriendAi.Api/bonbot-api.zip
+GirlfriendAi.Web/.env.production
