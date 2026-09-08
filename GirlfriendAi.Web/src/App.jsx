@@ -198,30 +198,47 @@ function App() {
   if (!isLoggedIn) {
     return (
       <main>
-        <h1>Bönbot</h1>
+        <div className="chat-header">
+          <h1>Bönbot</h1>
+          <span>Din personliga AI</span>
+        </div>
 
-        <input
-          type="password"
-          value={pin}
-          onChange={(event) => setPin(event.target.value)}
-          onKeyDown={handlePinKeyDown}
-          placeholder="PIN-kod"
-        />
+        <div className="login-panel">
+          <input
+            type="password"
+            value={pin}
+            onChange={(event) => setPin(event.target.value)}
+            onKeyDown={handlePinKeyDown}
+            placeholder="PIN-kod"
+          />
 
-        <button onClick={handleLogin}>
-          Logga in
-        </button>
+          <button onClick={handleLogin}>
+            Logga in
+          </button>
 
-        {loginError && <p>{loginError}</p>}
+          {loginError && (
+            <p className="error-text">{loginError}</p>
+          )}
+        </div>
       </main>
     )
   }
 
   return (
     <main>
-      <h1>Bönbot</h1>
+      <div className="chat-header">
+        <h1>Bönbot</h1>
+        <span>Din personliga AI</span>
+      </div>
 
       <div className="chat" ref={chatRef}>
+        {messages.length === 0 && !isLoading && (
+          <div className="empty-state">
+            <p>Hej 👋</p>
+            <span>Skriv något till Bönbot för att börja chatta.</span>
+          </div>
+        )}
+
         {messages.map((item) => (
           <div
             key={item.id}
@@ -230,37 +247,56 @@ function App() {
             }`}
           >
             <strong>
-              {item.role === 'user' ? 'Du' : 'Bönbot'}:
-            </strong>{' '}
+              {item.role === 'user' ? 'Du' : 'Bönbot'}
+            </strong>
+
             {item.content}
           </div>
         ))}
 
-        {isLoading && <p>(Bönbot både tänker och skriver...)</p>}
+        {isLoading && (
+          <p className="thinking">
+            (Bönbot både tänker och skriver...)
+          </p>
+        )}
 
-        {error && <p>{error}</p>}
+        {error && (
+          <p className="error-text">{error}</p>
+        )}
       </div>
 
-      <input
-        type="text"
-        value={message}
-        onChange={(event) => setMessage(event.target.value)}
-        onKeyDown={handleChatKeyDown}
-        placeholder="Skriv ett meddelande..."
-        disabled={isLoading}
-      />
+      <div className="composer">
+        <input
+          type="text"
+          value={message}
+          onChange={(event) => setMessage(event.target.value)}
+          onKeyDown={handleChatKeyDown}
+          placeholder="Skriv ett meddelande..."
+          disabled={isLoading}
+        />
 
-      <button onClick={handleSend} disabled={isLoading}>
-        {isLoading ? 'Skickar...' : 'Skicka'}
-      </button>
+        <button onClick={handleSend} disabled={isLoading}>
+          {isLoading ? 'Skickar...' : 'Skicka'}
+        </button>
+      </div>
 
-      <button onClick={handleClear} disabled={isLoading}>
-        Rensa chatten
-      </button>
+      <div className="actions">
+        <button
+          className="secondary-button"
+          onClick={handleClear}
+          disabled={isLoading}
+        >
+          Rensa chatten
+        </button>
 
-      <button onClick={handleLogout} disabled={isLoading}>
-        Logga ut
-      </button>
+        <button
+          className="secondary-button"
+          onClick={handleLogout}
+          disabled={isLoading}
+        >
+          Logga ut
+        </button>
+      </div>
     </main>
   )
 }

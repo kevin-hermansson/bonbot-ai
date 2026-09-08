@@ -8,7 +8,7 @@ body {
 main {
   width: 100%;
   max-width: 760px;
-  min-height: 100vh;
+  height: 100vh;
   margin: 0 auto;
   padding: 20px;
   display: flex;
@@ -58,10 +58,58 @@ h1 {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
+.composer {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding-top: 10px;
+}
+
+.composer input {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+.composer button {
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.actions button {
+  flex: 1;
+}
+
+.login-panel {
+  width: 100%;
+  max-width: 420px;
+  margin: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.login-panel input {
+  margin: 0;
+}
+
+.login-panel button {
+  width: 100%;
+}
+
 input {
   width: 100%;
   padding: 13px 14px;
-  margin-bottom: 10px;
   border: 1px solid #d1d5db;
   border-radius: 12px;
   font-size: 16px;
@@ -75,7 +123,6 @@ input:focus {
 
 button {
   padding: 11px 16px;
-  margin-bottom: 8px;
   cursor: pointer;
   border: none;
   border-radius: 12px;
@@ -93,6 +140,10 @@ button:disabled {
   opacity: 0.55;
 }
 
+.error-text {
+  color: #b91c1c;
+}
+
 @media (max-width: 600px) {
   main {
     padding: 14px;
@@ -105,4 +156,79 @@ button:disabled {
   .message {
     max-width: 86%;
   }
+
+  .composer {
+    gap: 8px;
+  }
+
+  .composer button {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}
+.chat-header {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.chat-header h1 {
+  margin-bottom: 4px;
+}
+
+.chat-header span {
+  font-size: 14px;
+  color: #6b7280;
+}
+.thinking {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+  font-style: italic;
+}
+.secondary-button {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.secondary-button:hover:not(:disabled) {
+  background: #d1d5db;
+  opacity: 1;
+}
+
+.composer {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding-top: 12px;
+}
+
+.composer input {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  border-radius: 999px;
+  padding: 13px 16px;
+}
+
+.composer button {
+  flex-shrink: 0;
+  margin: 0;
+  border-radius: 999px;
+  padding: 12px 18px;
+}
+
+.empty-state {
+  margin: auto;
+  text-align: center;
+  color: #6b7280;
+}
+
+.empty-state p {
+  margin: 0 0 6px;
+  font-size: 22px;
+  color: #111827;
+}
+
+.empty-state span {
+  font-size: 14px;
 }
