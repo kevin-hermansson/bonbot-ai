@@ -32,8 +32,8 @@ main {
 
 .chat {
   flex: 1;
-  min-height: 420px;
-  max-height: calc(100vh - 220px);
+  min-height: 320px;
+  max-height: calc(100vh - 260px);
 
   display: flex;
   flex-direction: column;
