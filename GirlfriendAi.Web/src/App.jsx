@@ -247,7 +247,7 @@ function App() {
             }`}
           >
             <strong>
-              {item.role === 'user' ? 'Du' : 'Bönbot'}
+              {item.role === 'user' ? 'Bönan' : 'Bönbot'}
             </strong>
 
             {item.content}
