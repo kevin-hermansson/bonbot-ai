@@ -14,6 +14,8 @@ function App() {
   )
   const [loginError, setLoginError] = useState('')
   const [message, setMessage] = useState('')
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [uploadResult, setUploadResult] = useState(null)
   const [messages, setMessages] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -22,6 +24,7 @@ function App() {
   )
 
   const chatRef = useRef(null)
+  const fileInputRef = useRef(null)
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -52,6 +55,8 @@ function App() {
     setIsLoggedIn(false)
     setMessages([])
     setMessage('')
+    setSelectedFile(null)
+    setUploadResult(null)
     setError('')
   }
 
@@ -129,6 +134,21 @@ function App() {
     }
   }
 
+  function handleFileChange(event) {
+    const file = event.target.files[0]
+    event.target.value = ''
+    if (!file) return
+
+    if (file.size === 0 || file.size > 10 * 1024 * 1024) {
+      setError(file.size === 0 ? 'Filen får inte vara tom.' : 'Filen får vara max 10 MB.')
+      return
+    }
+
+    setSelectedFile(file)
+    setUploadResult(null)
+    setError('')
+  }
+
   async function handleSend() {
     if (!message.trim() || isLoading) {
       return
@@ -136,15 +156,22 @@ function App() {
 
     setIsLoading(true)
     setError('')
+    setUploadResult(null)
 
     try {
-      const response = await fetch(`${API_URL}/chat`, {
+      const formData = selectedFile ? new FormData() : null
+      if (formData) {
+        formData.append('message', message)
+        formData.append('file', selectedFile)
+      }
+
+      const response = await fetch(`${API_URL}/${selectedFile ? 'chat-with-file' : 'chat'}`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          ...(!selectedFile && { 'Content-Type': 'application/json' }),
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
+        body: formData || JSON.stringify({
           message: message,
         }),
       })
@@ -171,7 +198,14 @@ function App() {
         return
       }
 
-      await response.json()
+      const data = await response.json()
+
+      if (selectedFile) {
+        setUploadResult(data)
+        setSelectedFile(null)
+        setMessage('')
+        return
+      }
 
       setMessage('')
       await loadMessages()
@@ -211,6 +245,7 @@ function App() {
       }
 
       setMessages([])
+      setUploadResult(null)
     } catch {
       setError('Kunde inte rensa chatten.')
     }
@@ -327,7 +362,47 @@ function App() {
         )}
       </div>
 
+      {uploadResult && (
+        <p className="upload-result" role="status">
+          Uppladdning bekräftad: {uploadResult.fileName} ({uploadResult.fileSize.toLocaleString('sv-SE')} byte).
+          {' '}Filen har inte skickats till Bönbot för analys.
+        </p>
+      )}
+
+      {selectedFile && (
+        <div className="attachment-preview">
+          <span title={selectedFile.name}>{selectedFile.name}</span>
+          <button
+            className="secondary-button"
+            onClick={() => setSelectedFile(null)}
+            disabled={isLoading}
+            aria-label="Ta bort bifogad fil"
+          >
+            Ta bort ×
+          </button>
+        </div>
+      )}
+
       <div className="composer">
+        <input
+          ref={fileInputRef}
+          type="file"
+          hidden
+          onChange={handleFileChange}
+          disabled={isLoading}
+          aria-label="Välj en studiefil"
+        />
+        <button
+          className="attachment-button"
+          onClick={() => fileInputRef.current.click()}
+          disabled={isLoading}
+          aria-label="Bifoga en fil (max 10 MB)"
+          title="Bifoga en fil (max 10 MB)"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="m21 11-8.5 8.5a6 6 0 0 1-8.5-8.5l9-9a4 4 0 0 1 5.7 5.7l-9 9a2 2 0 0 1-2.8-2.8L15 6" />
+          </svg>
+        </button>
         <input
           type="text"
           aria-label="Meddelande till Bönbot"

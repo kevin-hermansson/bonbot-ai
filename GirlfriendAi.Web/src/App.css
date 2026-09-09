@@ -215,6 +215,32 @@ input::placeholder { color: var(--muted); opacity: 1; }
 .composer input { flex: 1; background: transparent; border-color: transparent; }
 .composer button { flex-shrink: 0; }
 
+.composer .attachment-button {
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  background: transparent;
+  color: var(--accent);
+  border-color: var(--border);
+}
+
+.attachment-preview, .upload-result {
+  flex-shrink: 0;
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.attachment-preview { display: flex; align-items: center; gap: 12px; }
+.attachment-preview span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attachment-preview button { flex-shrink: 0; }
+.upload-result { overflow-wrap: anywhere; max-height: 120px; overflow-y: auto; }
+
 .actions {
   display: flex;
   justify-content: space-between;

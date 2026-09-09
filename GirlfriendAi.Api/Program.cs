@@ -72,6 +72,31 @@ bool IsAuthorized(HttpRequest request)
     return true;
 }
 
+bool TryAcceptChatRequest()
+{
+    lock (chatRequests)
+    {
+        var now = DateTime.UtcNow;
+        var oneHourAgo = now.AddHours(-1);
+
+        while (
+            chatRequests.TryPeek(out var requestTime) &&
+            requestTime <= oneHourAgo
+        )
+        {
+            chatRequests.TryDequeue(out _);
+        }
+
+        if (chatRequests.Count >= 100)
+        {
+            return false;
+        }
+
+        chatRequests.Enqueue(now);
+        return true;
+    }
+}
+
 app.MapPost("/login", (LoginRequest request) =>
 {
     var oneHourAgo = DateTime.UtcNow.AddHours(-1);
@@ -130,27 +155,11 @@ app.MapPost("/chat", async (
         return Results.Unauthorized();
     }
 
-    lock (chatRequests)
+    if (!TryAcceptChatRequest())
     {
-        var now = DateTime.UtcNow;
-        var oneHourAgo = now.AddHours(-1);
-
-        while (
-            chatRequests.TryPeek(out var requestTime) &&
-            requestTime <= oneHourAgo
-        )
-        {
-            chatRequests.TryDequeue(out _);
-        }
-
-        if (chatRequests.Count >= 100)
-        {
-            return Results.StatusCode(
-                StatusCodes.Status429TooManyRequests
-            );
-        }
-
-        chatRequests.Enqueue(now);
+        return Results.StatusCode(
+            StatusCodes.Status429TooManyRequests
+        );
     }
 
     var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
@@ -258,6 +267,73 @@ app.MapPost("/chat", async (
     return Results.Ok(
         new ChatResponse(reply ?? "")
     );
+});
+
+app.MapPost("/chat-with-file", async (HttpRequest httpRequest) =>
+{
+    if (!IsAuthorized(httpRequest))
+    {
+        return Results.Unauthorized();
+    }
+
+    if (!TryAcceptChatRequest())
+    {
+        return Results.StatusCode(
+            StatusCodes.Status429TooManyRequests
+        );
+    }
+
+    const long maxFileSize = 10 * 1024 * 1024;
+
+    if (httpRequest.ContentType?.StartsWith(
+        "multipart/form-data", StringComparison.OrdinalIgnoreCase) != true)
+    {
+        return Results.BadRequest("Använd multipart/form-data.");
+    }
+
+    IFormCollection form;
+    try
+    {
+        form = await httpRequest.ReadFormAsync(httpRequest.HttpContext.RequestAborted);
+    }
+    catch (InvalidDataException)
+    {
+        return Results.BadRequest("Ogiltig eller för stor uppladdning.");
+    }
+    catch (BadHttpRequestException exception)
+    {
+        return Results.Json("Ogiltig eller för stor uppladdning.",
+            statusCode: exception.StatusCode);
+    }
+
+    if (form["message"].Count != 1 || string.IsNullOrWhiteSpace(form["message"]))
+    {
+        return Results.BadRequest("Meddelandet får inte vara tomt.");
+    }
+
+    if (form["message"].ToString().Length > 2000)
+    {
+        return Results.BadRequest("Meddelandet får vara max 2000 tecken.");
+    }
+
+    if (form.Files.Count != 1 || form.Files[0].Name != "file")
+    {
+        return Results.BadRequest("Bifoga exakt en fil.");
+    }
+
+    var file = form.Files[0];
+    if (file.Length == 0 || string.IsNullOrWhiteSpace(file.FileName))
+    {
+        return Results.BadRequest("Filen får inte vara tom.");
+    }
+
+    if (file.Length > maxFileSize)
+    {
+        return Results.Json("Filen får vara max 10 MB.",
+            statusCode: StatusCodes.Status413PayloadTooLarge);
+    }
+
+    return Results.Ok(new { fileName = file.FileName, fileSize = file.Length });
 });
 
 app.MapGet("/messages", async (
