@@ -1,7 +1,10 @@
 using System.Collections.Concurrent;
+using System.IO.Compression;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Xml;
+using System.Xml.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http.Features;
 using UglyToad.PdfPig;
@@ -350,9 +353,9 @@ app.MapPost("/chat-with-file", async (HttpRequest httpRequest, AppDbContext db) 
 
     var fileName = Path.GetFileName(file.FileName.Replace('\\', '/'));
     var extension = Path.GetExtension(fileName).ToLowerInvariant();
-    if (extension != ".pdf" && extension != ".txt")
+    if (extension != ".pdf" && extension != ".txt" && extension != ".docx")
     {
-        return Results.BadRequest("Endast PDF- och TXT-filer stöds.");
+        return Results.BadRequest("Endast PDF-, TXT- och DOCX-filer stöds.");
     }
 
     const int maxDocumentCharacters = 40_000;
@@ -370,6 +373,53 @@ app.MapPost("/chat-with-file", async (HttpRequest httpRequest, AppDbContext db) 
                 httpRequest.HttpContext.RequestAborted);
             isTruncated = count > maxDocumentCharacters;
             extractedText = new string(characters, 0, Math.Min(count, maxDocumentCharacters));
+        }
+        else if (extension == ".docx")
+        {
+            using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
+            var documentEntry = archive.GetEntry("word/document.xml")
+                ?? throw new InvalidDataException("DOCX document body is missing.");
+
+            // Bound decompression; read only XML, never macros or embedded objects.
+            const int maxXmlSize = 20 * 1024 * 1024;
+            if (documentEntry.Length > maxXmlSize)
+            {
+                return Results.BadRequest("DOCX-filens uppackade textdel är för stor (max 20 MB).");
+            }
+
+            using var documentStream = documentEntry.Open();
+            using var xmlReader = XmlReader.Create(documentStream, new XmlReaderSettings
+            {
+                DtdProcessing = DtdProcessing.Prohibit,
+                XmlResolver = null,
+                MaxCharactersInDocument = maxXmlSize
+            });
+            var documentXml = XDocument.Load(xmlReader);
+            XNamespace word = documentXml.Root?.Name.Namespace
+                ?? throw new InvalidDataException("DOCX document root is missing.");
+            if (word != "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+                && word != "http://purl.oclc.org/ooxml/wordprocessingml/main")
+            {
+                throw new InvalidDataException("Invalid WordprocessingML namespace.");
+            }
+
+            var bodyXml = documentXml.Root?.Element(word + "body")
+                ?? throw new InvalidDataException("DOCX document body is missing.");
+            var text = new StringBuilder();
+            foreach (var element in bodyXml.Descendants())
+            {
+                httpRequest.HttpContext.RequestAborted.ThrowIfCancellationRequested();
+                var value = element.Name == word + "t" ? element.Value
+                    : element.Name == word + "tab" ? "\t"
+                    : element.Name == word + "p" || element.Name == word + "br"
+                        || element.Name == word + "cr" ? "\n" : "";
+                var remaining = maxDocumentCharacters + 1 - text.Length;
+                text.Append(value.AsSpan(0, Math.Min(value.Length, remaining)));
+                if (text.Length > maxDocumentCharacters) break;
+            }
+
+            isTruncated = text.Length > maxDocumentCharacters;
+            extractedText = text.ToString(0, Math.Min(text.Length, maxDocumentCharacters));
         }
         else
         {
@@ -394,7 +444,7 @@ app.MapPost("/chat-with-file", async (HttpRequest httpRequest, AppDbContext db) 
     catch (Exception exception) when (exception is not OperationCanceledException
         && exception is not OutOfMemoryException)
     {
-        return Results.BadRequest("Kunde inte läsa filen. Använd en giltig TXT-fil i UTF-8 eller en PDF med läsbar text utan lösenord.");
+        return Results.BadRequest("Kunde inte läsa filen. Använd en giltig TXT-fil i UTF-8, en PDF med läsbar text eller en DOCX-fil utan lösenord.");
     }
 
     if (string.IsNullOrWhiteSpace(extractedText))

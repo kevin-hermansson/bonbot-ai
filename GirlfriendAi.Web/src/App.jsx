@@ -142,8 +142,8 @@ function App() {
       return
     }
 
-    if (!/\.(pdf|txt)$/i.test(file.name)) {
-      setError('Endast PDF- och TXT-filer stöds.')
+    if (!/\.(pdf|txt|docx)$/i.test(file.name)) {
+      setError('Endast PDF-, TXT- och DOCX-filer stöds.')
       return
     }
 
@@ -376,7 +376,7 @@ function App() {
         <input
           ref={fileInputRef}
           type="file"
-          accept=".pdf,.txt"
+          accept=".pdf,.txt,.docx"
           hidden
           onChange={handleFileChange}
           disabled={isLoading}
