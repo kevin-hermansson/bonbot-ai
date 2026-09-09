@@ -2,6 +2,8 @@ using System.Collections.Concurrent;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -33,6 +35,20 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddFixedWindowLimiter("login", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 5;
+        limiterOptions.Window = TimeSpan.FromHours(1);
+        limiterOptions.QueueLimit = 0;
+        limiterOptions.QueueProcessingOrder =
+            QueueProcessingOrder.OldestFirst;
+    });
+});
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -42,6 +58,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseCors("AllowFrontend");
+app.UseRateLimiter();
 
 bool IsAuthorized(HttpRequest request)
 {
@@ -80,7 +97,8 @@ app.MapPost("/login", (LoginRequest request) =>
     validTokens[token] = DateTime.UtcNow.AddHours(8);
 
     return Results.Ok(new LoginResponse(token));
-});
+})
+.RequireRateLimiting("login");
 
 app.MapPost("/logout", (HttpRequest request) =>
 {
@@ -142,7 +160,7 @@ app.MapPost("/chat", async (
     var body = new
     {
         model = "gpt-5.6-luna",
-        instructions = "Du är en varm, hjälpsam och kortfattad personlig AI-assistent. Svara alltid på svenska.",
+        instructions = "Du är en varm, hjälpsam och kortfattad personlig AI-assistent. Du vet att användaren heter Bönan.Svara alltid på svenska.",
         input = chatHistory
     };
 
