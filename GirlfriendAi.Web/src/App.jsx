@@ -230,7 +230,7 @@ function App() {
 
   if (!isLoggedIn) {
     return (
-      <main>
+      <main className="app-shell login-shell">
         <div className="chat-header">
           <div>
             <h1>Bönbot ❤️</h1>
@@ -248,7 +248,13 @@ function App() {
         </div>
 
         <div className="login-panel">
+          <div className="welcome-mark" aria-hidden="true">✦</div>
+          <span className="eyebrow">EN LITEN PLATS FÖR DIG</span>
+          <h2>Välkommen hem, Bön.</h2>
+          <p className="login-intro">Tankar, små stunder och allt däremellan.</p>
+          <label htmlFor="pin">Din PIN-kod</label>
           <input
+            id="pin"
             type="password"
             value={pin}
             onChange={(event) => setPin(event.target.value)}
@@ -269,7 +275,7 @@ function App() {
   }
 
   return (
-    <main>
+    <main className="app-shell">
       <div className="chat-header">
         <div>
           <h1>Bönbot ❤️</h1>
@@ -289,6 +295,8 @@ function App() {
       <div className="chat" ref={chatRef}>
         {messages.length === 0 && !isLoading && (
           <div className="empty-state">
+            <div className="welcome-mark" aria-hidden="true">✦</div>
+            <span className="eyebrow">BARA DU OCH BÖNBOT</span>
             <p>Hej 👋</p>
             <span>Skriv något till Bönbot för att börja chatta.</span>
           </div>
@@ -322,6 +330,7 @@ function App() {
       <div className="composer">
         <input
           type="text"
+          aria-label="Meddelande till Bönbot"
           value={message}
           onChange={(event) => setMessage(event.target.value)}
           onKeyDown={handleChatKeyDown}
