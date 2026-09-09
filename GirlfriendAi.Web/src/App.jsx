@@ -15,7 +15,6 @@ function App() {
   const [loginError, setLoginError] = useState('')
   const [message, setMessage] = useState('')
   const [selectedFile, setSelectedFile] = useState(null)
-  const [uploadResult, setUploadResult] = useState(null)
   const [messages, setMessages] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -56,7 +55,6 @@ function App() {
     setMessages([])
     setMessage('')
     setSelectedFile(null)
-    setUploadResult(null)
     setError('')
   }
 
@@ -144,8 +142,12 @@ function App() {
       return
     }
 
+    if (!/\.(pdf|txt)$/i.test(file.name)) {
+      setError('Endast PDF- och TXT-filer stöds.')
+      return
+    }
+
     setSelectedFile(file)
-    setUploadResult(null)
     setError('')
   }
 
@@ -156,7 +158,6 @@ function App() {
 
     setIsLoading(true)
     setError('')
-    setUploadResult(null)
 
     try {
       const formData = selectedFile ? new FormData() : null
@@ -187,7 +188,9 @@ function App() {
         if (errorText) {
           try {
             const parsedError = JSON.parse(errorText)
-            setError(parsedError)
+            setError(typeof parsedError === 'string'
+              ? parsedError
+              : parsedError?.detail || parsedError?.title || 'Något gick fel. Försök igen.')
           } catch {
             setError(errorText)
           }
@@ -198,14 +201,8 @@ function App() {
         return
       }
 
-      const data = await response.json()
-
-      if (selectedFile) {
-        setUploadResult(data)
-        setSelectedFile(null)
-        setMessage('')
-        return
-      }
+      await response.json()
+      setSelectedFile(null)
 
       setMessage('')
       await loadMessages()
@@ -245,7 +242,6 @@ function App() {
       }
 
       setMessages([])
-      setUploadResult(null)
     } catch {
       setError('Kunde inte rensa chatten.')
     }
@@ -362,13 +358,6 @@ function App() {
         )}
       </div>
 
-      {uploadResult && (
-        <p className="upload-result" role="status">
-          Uppladdning bekräftad: {uploadResult.fileName} ({uploadResult.fileSize.toLocaleString('sv-SE')} byte).
-          {' '}Filen har inte skickats till Bönbot för analys.
-        </p>
-      )}
-
       {selectedFile && (
         <div className="attachment-preview">
           <span title={selectedFile.name}>{selectedFile.name}</span>
@@ -387,6 +376,7 @@ function App() {
         <input
           ref={fileInputRef}
           type="file"
+          accept=".pdf,.txt"
           hidden
           onChange={handleFileChange}
           disabled={isLoading}

@@ -224,7 +224,7 @@ input::placeholder { color: var(--muted); opacity: 1; }
   border-color: var(--border);
 }
 
-.attachment-preview, .upload-result {
+.attachment-preview {
   flex-shrink: 0;
   margin: 12px 0 0;
   padding: 10px 14px;
@@ -239,7 +239,6 @@ input::placeholder { color: var(--muted); opacity: 1; }
 .attachment-preview { display: flex; align-items: center; gap: 12px; }
 .attachment-preview span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .attachment-preview button { flex-shrink: 0; }
-.upload-result { overflow-wrap: anywhere; max-height: 120px; overflow-y: auto; }
 
 .actions {
   display: flex;
