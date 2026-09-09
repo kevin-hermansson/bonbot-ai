@@ -4,6 +4,25 @@ import './App.css'
 
 const API_URL = import.meta.env.VITE_API_URL
 
+const STUDY_ACTIONS = [
+  {
+    label: 'Sammanfatta',
+    prompt: 'Sammanfatta materialet tydligt och kortfattat. Lyft fram de viktigaste punkterna.',
+  },
+  {
+    label: 'Gör quiz',
+    prompt: 'Gör ett quiz på materialet med 5 frågor. Vänta med facit tills jag har svarat.',
+  },
+  {
+    label: 'Förklara enklare',
+    prompt: 'Förklara materialet enklare, steg för steg, som för en nybörjare.',
+  },
+  {
+    label: 'Gör flashcards',
+    prompt: 'Skapa flashcards från materialet. Skriv varje kort som Fråga: ... och Svar: ...',
+  },
+]
+
 function App() {
   const [pin, setPin] = useState('')
   const [token, setToken] = useState(
@@ -151,8 +170,9 @@ function App() {
     setError('')
   }
 
-  async function handleSend() {
-    if (!message.trim() || isLoading) {
+  async function handleSend(studyPrompt = null) {
+    const messageToSend = studyPrompt ?? message
+    if (!messageToSend.trim() || isLoading) {
       return
     }
 
@@ -162,7 +182,7 @@ function App() {
     try {
       const formData = selectedFile ? new FormData() : null
       if (formData) {
-        formData.append('message', message)
+        formData.append('message', messageToSend)
         formData.append('file', selectedFile)
       }
 
@@ -173,7 +193,7 @@ function App() {
           Authorization: `Bearer ${token}`,
         },
         body: formData || JSON.stringify({
-          message: message,
+          message: messageToSend,
         }),
       })
 
@@ -204,7 +224,7 @@ function App() {
       await response.json()
       setSelectedFile(null)
 
-      setMessage('')
+      if (studyPrompt === null) setMessage('')
       await loadMessages()
     } catch {
       setError('Något gick fel. Försök igen.')
@@ -372,6 +392,21 @@ function App() {
         </div>
       )}
 
+      <div className="study-actions" role="group" aria-label="Snabbval för studier">
+        {STUDY_ACTIONS.map((action) => (
+          <button
+            key={action.label}
+            type="button"
+            className="study-action"
+            onClick={() => handleSend(action.prompt)}
+            disabled={isLoading}
+            title={action.prompt}
+          >
+            {action.label}
+          </button>
+        ))}
+      </div>
+
       <div className="composer">
         <input
           ref={fileInputRef}
@@ -403,7 +438,7 @@ function App() {
           disabled={isLoading}
         />
 
-        <button onClick={handleSend} disabled={isLoading}>
+        <button onClick={() => handleSend()} disabled={isLoading}>
           {isLoading ? 'Skickar...' : 'Skicka'}
         </button>
       </div>

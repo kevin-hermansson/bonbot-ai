@@ -240,6 +240,32 @@ input::placeholder { color: var(--muted); opacity: 1; }
 .attachment-preview span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .attachment-preview button { flex-shrink: 0; }
 
+.study-actions {
+  display: flex;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.study-action {
+  min-height: 40px;
+  padding: 9px 15px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--glow), var(--panel));
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.study-action:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--surface);
+}
+
+.study-actions + .composer { margin-top: 10px; }
+
 .actions {
   display: flex;
   justify-content: space-between;
@@ -368,6 +394,8 @@ input::placeholder { color: var(--muted); opacity: 1; }
   .composer { gap: 5px; margin-top: 12px; }
   .composer input { padding: 13px 9px; }
   .composer button { padding: 13px 15px; }
+  .study-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .study-action { min-height: 44px; padding: 9px 10px; }
   .login-shell { min-height: 620px; }
   .login-panel { padding: 30px 24px; }
   .login-panel h2 { font-size: 28px; }
