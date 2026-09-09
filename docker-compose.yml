@@ -1,0 +1,26 @@
+services:
+  bonbot-api:
+    build:
+      context: ./GirlfriendAi.Api
+
+    container_name: bonbot-api-container
+
+    ports:
+      - "8080:8080"
+
+    env_file:
+      - ./GirlfriendAi.Api/.env
+
+  bonbot-web:
+    build:
+      context: ./GirlfriendAi.Web
+      args:
+        VITE_API_URL: http://localhost:8080
+
+    container_name: bonbot-web-container
+
+    ports:
+      - "3000:80"
+
+    depends_on:
+      - bonbot-api

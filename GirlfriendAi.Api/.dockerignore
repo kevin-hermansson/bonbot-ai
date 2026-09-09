@@ -1,0 +1,10 @@
+bin/
+obj/
+publish/
+bonbot-api.zip
+girlfriend-ai.db
+girlfriend-ai.db-shm
+girlfriend-ai.db-wal
+.env
+.git/
+.gitignore
