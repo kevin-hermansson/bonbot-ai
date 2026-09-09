@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+
 import './App.css'
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -12,12 +13,10 @@ function App() {
     () => Boolean(sessionStorage.getItem('bonbotToken'))
   )
   const [loginError, setLoginError] = useState('')
-
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-
   const [theme, setTheme] = useState(
     () => localStorage.getItem('bonbotTheme') || 'dark'
   )
@@ -71,19 +70,20 @@ function App() {
       })
 
       if (response.status === 429) {
-  setLoginError('För många felaktiga försök. Försök igen senare. (om en timme tillåme)')
-  return
-}
+        setLoginError(
+          'För många felaktiga försök. Försök igen senare. (om en timme tillåme)'
+        )
+        return
+      }
 
-if (!response.ok) {
-  setLoginError('Fel PIN-kod.')
-  return
-}
+      if (!response.ok) {
+        setLoginError('Fel PIN-kod.')
+        return
+      }
 
       const data = await response.json()
 
       sessionStorage.setItem('bonbotToken', data.token)
-
       setToken(data.token)
       setIsLoggedIn(true)
       setPin('')
@@ -155,7 +155,20 @@ if (!response.ok) {
       }
 
       if (!response.ok) {
-        throw new Error()
+        const errorText = await response.text()
+
+        if (errorText) {
+          try {
+            const parsedError = JSON.parse(errorText)
+            setError(parsedError)
+          } catch {
+            setError(errorText)
+          }
+        } else {
+          setError('Något gick fel. Försök igen.')
+        }
+
+        return
       }
 
       await response.json()
@@ -291,7 +304,6 @@ if (!response.ok) {
             <strong>
               {item.role === 'user' ? 'Bön' : 'Bönbot'}
             </strong>
-
             {item.content}
           </div>
         ))}
