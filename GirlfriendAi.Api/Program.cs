@@ -18,7 +18,10 @@ if (string.IsNullOrWhiteSpace(appPin))
 }
 
 var validTokens = new ConcurrentDictionary<string, DateTime>();
+
 var failedLoginAttempts = new ConcurrentQueue<DateTime>();
+
+var chatRequests = new ConcurrentQueue<DateTime>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite("Data Source=girlfriend-ai.db"));
@@ -91,7 +94,6 @@ app.MapPost("/login", (LoginRequest request) =>
     if (request.Pin != appPin)
     {
         failedLoginAttempts.Enqueue(DateTime.UtcNow);
-
         return Results.Unauthorized();
     }
 
@@ -128,22 +130,49 @@ app.MapPost("/chat", async (
         return Results.Unauthorized();
     }
 
+    lock (chatRequests)
+    {
+        var now = DateTime.UtcNow;
+        var oneHourAgo = now.AddHours(-1);
+
+        while (
+            chatRequests.TryPeek(out var requestTime) &&
+            requestTime <= oneHourAgo
+        )
+        {
+            chatRequests.TryDequeue(out _);
+        }
+
+        if (chatRequests.Count >= 100)
+        {
+            return Results.StatusCode(
+                StatusCodes.Status429TooManyRequests
+            );
+        }
+
+        chatRequests.Enqueue(now);
+    }
+
     var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
 
     if (string.IsNullOrWhiteSpace(apiKey))
     {
         return Results.Problem("OPENAI_API_KEY is missing.");
-
     }
+
     if (string.IsNullOrWhiteSpace(request.Message))
     {
-        return Results.BadRequest("Meddelandet får inte vara tomt.");
+        return Results.BadRequest(
+            "Meddelandet får inte vara tomt."
+        );
     }
 
     if (request.Message.Length > 2000)
     {
-        return Results.BadRequest("Meddelandet får vara max 2000 tecken.");
-    }   
+        return Results.BadRequest(
+            "Meddelandet får vara max 2000 tecken."
+        );
+    }
 
     var userMessage = new ChatMessage
     {
@@ -152,6 +181,7 @@ app.MapPost("/chat", async (
     };
 
     db.ChatMessages.Add(userMessage);
+
     await db.SaveChangesAsync();
 
     var chatHistory = await db.ChatMessages
@@ -222,6 +252,7 @@ app.MapPost("/chat", async (
     };
 
     db.ChatMessages.Add(assistantMessage);
+
     await db.SaveChangesAsync();
 
     return Results.Ok(
@@ -262,6 +293,9 @@ app.MapDelete("/messages", async (
 app.Run();
 
 record ChatRequest(string Message);
+
 record ChatResponse(string Reply);
+
 record LoginRequest(string Pin);
+
 record LoginResponse(string Token);
