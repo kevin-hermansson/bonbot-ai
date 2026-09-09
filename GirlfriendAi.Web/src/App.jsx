@@ -70,10 +70,15 @@ function App() {
         }),
       })
 
-      if (!response.ok) {
-        setLoginError('Fel PIN-kod.')
-        return
-      }
+      if (response.status === 429) {
+  setLoginError('För många felaktiga försök. Försök igen senare. (om en timme tillåme)')
+  return
+}
+
+if (!response.ok) {
+  setLoginError('Fel PIN-kod.')
+  return
+}
 
       const data = await response.json()
 
