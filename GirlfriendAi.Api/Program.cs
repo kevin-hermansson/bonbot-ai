@@ -133,7 +133,17 @@ app.MapPost("/chat", async (
     if (string.IsNullOrWhiteSpace(apiKey))
     {
         return Results.Problem("OPENAI_API_KEY is missing.");
+
     }
+    if (string.IsNullOrWhiteSpace(request.Message))
+    {
+        return Results.BadRequest("Meddelandet får inte vara tomt.");
+    }
+
+    if (request.Message.Length > 2000)
+    {
+        return Results.BadRequest("Meddelandet får vara max 2000 tecken.");
+    }   
 
     var userMessage = new ChatMessage
     {
