@@ -2,8 +2,6 @@ using System.Collections.Concurrent;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using System.Threading.RateLimiting;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +18,7 @@ if (string.IsNullOrWhiteSpace(appPin))
 }
 
 var validTokens = new ConcurrentDictionary<string, DateTime>();
+var failedLoginAttempts = new ConcurrentQueue<DateTime>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite("Data Source=girlfriend-ai.db"));
@@ -35,20 +34,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddRateLimiter(options =>
-{
-    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-
-    options.AddFixedWindowLimiter("login", limiterOptions =>
-    {
-        limiterOptions.PermitLimit = 5;
-        limiterOptions.Window = TimeSpan.FromHours(1);
-        limiterOptions.QueueLimit = 0;
-        limiterOptions.QueueProcessingOrder =
-            QueueProcessingOrder.OldestFirst;
-    });
-});
-
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -58,7 +43,6 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseCors("AllowFrontend");
-app.UseRateLimiter();
 
 bool IsAuthorized(HttpRequest request)
 {
@@ -87,8 +71,27 @@ bool IsAuthorized(HttpRequest request)
 
 app.MapPost("/login", (LoginRequest request) =>
 {
+    var oneHourAgo = DateTime.UtcNow.AddHours(-1);
+
+    while (
+        failedLoginAttempts.TryPeek(out var attemptTime) &&
+        attemptTime < oneHourAgo
+    )
+    {
+        failedLoginAttempts.TryDequeue(out _);
+    }
+
+    if (failedLoginAttempts.Count >= 5)
+    {
+        return Results.StatusCode(
+            StatusCodes.Status429TooManyRequests
+        );
+    }
+
     if (request.Pin != appPin)
     {
+        failedLoginAttempts.Enqueue(DateTime.UtcNow);
+
         return Results.Unauthorized();
     }
 
@@ -97,8 +100,7 @@ app.MapPost("/login", (LoginRequest request) =>
     validTokens[token] = DateTime.UtcNow.AddHours(8);
 
     return Results.Ok(new LoginResponse(token));
-})
-.RequireRateLimiting("login");
+});
 
 app.MapPost("/logout", (HttpRequest request) =>
 {
@@ -107,6 +109,7 @@ app.MapPost("/logout", (HttpRequest request) =>
     if (authorization.StartsWith("Bearer "))
     {
         var token = authorization["Bearer ".Length..];
+
         validTokens.TryRemove(token, out _);
     }
 
@@ -160,7 +163,12 @@ app.MapPost("/chat", async (
     var body = new
     {
         model = "gpt-5.6-luna",
-        instructions = "Du är en varm, hjälpsam och kortfattad personlig AI-assistent. Du vet att användaren heter Bönan.Svara alltid på svenska.",
+
+        instructions =
+            "Du är en varm, hjälpsam och kortfattad personlig AI-assistent. " +
+            "Du vet att användaren heter Bönan. " +
+            "Svara alltid på svenska.",
+
         input = chatHistory
     };
 
@@ -168,17 +176,23 @@ app.MapPost("/chat", async (
 
     var response = await client.PostAsync(
         "https://api.openai.com/v1/responses",
-        new StringContent(json, Encoding.UTF8, "application/json")
+        new StringContent(
+            json,
+            Encoding.UTF8,
+            "application/json"
+        )
     );
 
-    var responseText = await response.Content.ReadAsStringAsync();
+    var responseText =
+        await response.Content.ReadAsStringAsync();
 
     if (!response.IsSuccessStatusCode)
     {
         return Results.Problem(responseText);
     }
 
-    using var document = JsonDocument.Parse(responseText);
+    using var document =
+        JsonDocument.Parse(responseText);
 
     var messageOutput = document.RootElement
         .GetProperty("output")
@@ -200,7 +214,9 @@ app.MapPost("/chat", async (
     db.ChatMessages.Add(assistantMessage);
     await db.SaveChangesAsync();
 
-    return Results.Ok(new ChatResponse(reply ?? ""));
+    return Results.Ok(
+        new ChatResponse(reply ?? "")
+    );
 });
 
 app.MapGet("/messages", async (
