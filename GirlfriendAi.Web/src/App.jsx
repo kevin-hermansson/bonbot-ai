@@ -21,6 +21,10 @@ const STUDY_ACTIONS = [
     label: 'Gör flashcards',
     prompt: 'Skapa flashcards från materialet. Skriv varje kort som Fråga: ... och Svar: ...',
   },
+  {
+    label: 'Rätta mitt quiz',
+    prompt: 'Rätta mina quizsvar utifrån materialet och de tidigare frågorna. Ge poäng, visa rätt svar, förklara kort vad jag missade och avsluta med vad jag bör repetera.',
+  },
 ]
 
 function AssistantContent({ content }) {

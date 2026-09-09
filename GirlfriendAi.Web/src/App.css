@@ -438,6 +438,7 @@ input::placeholder { color: var(--muted); opacity: 1; }
   .composer button { padding: 13px 15px; }
   .study-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .study-action { min-height: 44px; padding: 9px 10px; }
+  .study-action:last-child:nth-child(odd) { grid-column: 1 / -1; }
   .login-shell { min-height: 620px; }
   .login-panel { padding: 30px 24px; }
   .login-panel h2 { font-size: 28px; }
