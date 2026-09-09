@@ -183,6 +183,46 @@ button:focus-visible, input:focus-visible {
   border-bottom-left-radius: 7px;
 }
 
+.assistant-content {
+  min-width: 0;
+  line-height: 1.8;
+}
+
+.assistant-text, .study-flashcard { white-space: pre-wrap; }
+.assistant-content > * + * { margin-top: 14px; }
+.answer-line { min-height: 1.2em; }
+.answer-line--numbered { margin-top: 16px; font-weight: 600; }
+.answer-line--numbered:first-child { margin-top: 0; }
+.answer-line--option { margin: 5px 0 5px 16px; }
+.answer-line--bullet { padding-left: 14px; text-indent: -14px; margin: 5px 0; }
+
+.study-flashcard {
+  margin: 0;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--glow), var(--panel));
+}
+
+.assistant-content > .study-flashcard:not(:first-child) { margin-top: 14px; }
+.study-flashcard dt { font-weight: 600; }
+.study-flashcard dd {
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.flashcard-label {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
 .composer {
   display: flex;
   align-items: center;
@@ -391,6 +431,8 @@ input::placeholder { color: var(--muted); opacity: 1; }
   .chat-header span { font-size: 12px; }
   .chat { padding: 20px 14px; gap: 16px; border-radius: 22px; }
   .message { max-width: 90%; padding: 13px 16px; }
+  .study-flashcard { padding: 14px; }
+  .answer-line--option { margin-left: 10px; }
   .composer { gap: 5px; margin-top: 12px; }
   .composer input { padding: 13px 9px; }
   .composer button { padding: 13px 15px; }

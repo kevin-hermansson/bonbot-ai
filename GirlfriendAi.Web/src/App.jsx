@@ -23,6 +23,63 @@ const STUDY_ACTIONS = [
   },
 ]
 
+function AssistantContent({ content }) {
+  const lines = content.split(/\r\n?|\n/)
+  const blocks = []
+  let plainLines = []
+
+  function flushText() {
+    if (!plainLines.length) return
+    blocks.push(
+      <div className="assistant-text" key={`text-${blocks.length}`}>
+        {plainLines.map((line, index) => {
+          const kind = /^\s*\d+[.)]\s+/.test(line) ? 'numbered'
+            : /^\s*[A-D][.)]\s+/i.test(line) ? 'option'
+            : /^\s*[-*•]\s+/.test(line) ? 'bullet' : 'plain'
+          return (
+            <div className={`answer-line answer-line--${kind}`} key={index}>
+              {line || '\u00a0'}
+            </div>
+          )
+        })}
+      </div>
+    )
+    plainLines = []
+  }
+
+  // Recognize labels only at the start of a line; leave unmatched text intact.
+  const questionLabel = /^\s*(?:\*\*)?Fråga:(?:\*\*)?\s*(.*)$/i
+  const answerLabel = /^\s*(?:\*\*)?Svar:(?:\*\*)?\s*(.*)$/i
+  for (let index = 0; index < lines.length; index++) {
+    const question = lines[index].match(questionLabel)
+    let answerIndex = index + 1
+    while (answerIndex < lines.length && !lines[answerIndex].trim()) answerIndex++
+    const answer = question && lines[answerIndex]?.match(answerLabel)
+
+    if (!question?.[1].trim() || !answer?.[1].trim()) {
+      plainLines.push(lines[index])
+      continue
+    }
+
+    flushText()
+    const answerLines = [answer[1]]
+    index = answerIndex
+    while (index + 1 < lines.length && lines[index + 1].trim()
+      && !questionLabel.test(lines[index + 1])) {
+      answerLines.push(lines[++index])
+    }
+    blocks.push(
+      <dl className="study-flashcard" key={`card-${blocks.length}`}>
+        <dt><span className="flashcard-label">Fråga</span>{question[1]}</dt>
+        <dd><span className="flashcard-label">Svar</span>{answerLines.join('\n')}</dd>
+      </dl>
+    )
+  }
+  flushText()
+
+  return <div className="assistant-content">{blocks}</div>
+}
+
 function App() {
   const [pin, setPin] = useState('')
   const [token, setToken] = useState(
@@ -363,7 +420,9 @@ function App() {
             <strong>
               {item.role === 'user' ? 'Bön' : 'Bönbot'}
             </strong>
-            {item.content}
+            {item.role === 'user'
+              ? item.content
+              : <AssistantContent content={item.content} />}
           </div>
         ))}
 
